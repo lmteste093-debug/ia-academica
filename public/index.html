@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IA Acadêmica | LM TECH 93</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="lm-ai-page">
+
+    <header class="lm-ai-hero">
+      <div class="lm-ai-badge">LM TECH 93</div>
+      <h1>IA Acadêmica</h1>
+      <p>
+        Assistente inteligente para apoiar estudantes com resumos,
+        estrutura de trabalhos, revisão de texto e orientação acadêmica.
+      </p>
+    </header>
+
+    <main class="lm-ai-card">
+      <div class="lm-ai-top">
+        <h2>Assistente Acadêmico</h2>
+        <span class="lm-ai-status">Online</span>
+      </div>
+
+      <div id="chatBox" class="lm-chat-box">
+        <div class="lm-msg lm-msg-ai">
+          Olá! Posso ajudar com tema, resumo, introdução, objetivos,
+          metodologia, revisão de texto e estrutura do teu trabalho.
+        </div>
+      </div>
+
+      <form id="chatForm" class="lm-chat-form">
+        <textarea
+          id="userInput"
+          placeholder="Escreve a tua dúvida acadêmica..."
+          rows="4"
+        ></textarea>
+
+        <div class="lm-chat-actions">
+          <button type="submit">Enviar</button>
+        </div>
+      </form>
+
+      <div class="lm-ai-note">
+        Plano grátis: até 3 perguntas por dia. O conteúdo deve ser revisto antes do uso final.
+      </div>
+    </main>
+
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
