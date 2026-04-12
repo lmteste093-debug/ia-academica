@@ -220,3 +220,100 @@ body {
     width: 100%;
   }
 }
+
+.lm-user-status-wrap {
+  flex: 1;
+  min-width: 260px;
+}
+
+.lm-user-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lm-plan-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  border: 1px solid transparent;
+}
+
+.lm-plan-free {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.10);
+  color: #dbe7f1;
+}
+
+.lm-plan-premium {
+  background: linear-gradient(135deg, rgba(0,229,255,0.18), rgba(0,184,255,0.16));
+  border-color: rgba(0,229,255,0.32);
+  color: #8cefff;
+  box-shadow: 0 0 18px rgba(0,229,255,0.10);
+}
+
+.lm-usage-wrap {
+  margin-top: 10px;
+}
+
+.lm-usage-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #a9c3d3;
+}
+
+.lm-usage-alert {
+  font-weight: 700;
+}
+
+.lm-usage-alert.warn {
+  color: #ffd27a;
+}
+
+.lm-usage-alert.danger {
+  color: #ff9b9b;
+}
+
+.lm-usage-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.lm-usage-bar-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #00e5ff, #00b8ff);
+  transition: width 0.35s ease;
+}
+
+.lm-usage-bar-fill.warn {
+  background: linear-gradient(135deg, #ffd166, #ffb347);
+}
+
+.lm-usage-bar-fill.danger {
+  background: linear-gradient(135deg, #ff8a8a, #ff5f6d);
+}
+
+@media (max-width: 640px) {
+  .lm-user-line,
+  .lm-usage-top {
+    align-items: flex-start;
+  }
+}

@@ -85,12 +85,89 @@ async function loadUserStatus() {
 
   if (!statusBox) return;
 
+  const planBadge = document.getElementById("lmPlanBadge");
+  const usageText = document.getElementById("lmUsageText");
+  const usageAlert = document.getElementById("lmUsageAlert");
+  const usageBarFill = document.getElementById("lmUsageBarFill");
+
   try {
     const response = await fetch("/api/me", {
       headers: {
         "Authorization": `Bearer ${token}`
       }
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      clearSession();
+      statusBox.textContent = "Sessão inválida.";
+      setTimeout(() => {
+        window.location.href = "/login.html";
+      }, 800);
+      return;
+    }
+
+    const u = data.user;
+    const isPremium = u.plan === "premium";
+    const limit = isPremium ? 100 : u.daily_limit;
+    const used = u.usage_today || 0;
+    const percent = Math.min((used / limit) * 100, 100);
+
+    // TEXTO BASE
+    statusBox.textContent = isPremium
+      ? "Conta premium ativa."
+      : "Conta grátis ativa.";
+
+    // BADGE
+    if (planBadge) {
+      planBadge.textContent = isPremium ? "PREMIUM" : "FREE";
+      planBadge.classList.remove("lm-plan-free", "lm-plan-premium");
+      planBadge.classList.add(isPremium ? "lm-plan-premium" : "lm-plan-free");
+    }
+
+    // TEXTO DE USO
+    if (usageText) {
+      usageText.textContent = `Uso hoje: ${used}/${limit}`;
+    }
+
+    // ALERTA VISUAL
+    if (usageAlert) {
+      usageAlert.textContent = "";
+      usageAlert.classList.remove("warn", "danger");
+
+      if (percent >= 100) {
+        usageAlert.textContent = "Limite atingido";
+        usageAlert.classList.add("danger");
+      } else if (percent >= 80) {
+        usageAlert.textContent = "Perto do limite";
+        usageAlert.classList.add("warn");
+      }
+    }
+
+    // BARRA DE PROGRESSO
+    if (usageBarFill) {
+      usageBarFill.style.width = `${percent}%`;
+      usageBarFill.classList.remove("warn", "danger");
+
+      if (percent >= 100) {
+        usageBarFill.classList.add("danger");
+      } else if (percent >= 80) {
+        usageBarFill.classList.add("warn");
+      }
+    }
+
+    // BLOQUEIO
+    if (used >= limit) {
+      lockChat("Limite diário atingido. Ativa o premium ou volta amanhã.");
+    } else {
+      unlockChat();
+    }
+
+  } catch {
+    statusBox.textContent = "Erro ao carregar conta.";
+  }
+}
 
     const data = await response.json();
 

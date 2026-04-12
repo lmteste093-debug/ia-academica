@@ -9,7 +9,24 @@
 <body>
 
 <div class="lm-user-top">
-  <div id="lmUserStatus" class="lm-ai-note">A carregar conta...</div>
+  <div class="lm-user-status-wrap">
+    <div class="lm-user-line">
+      <span id="lmPlanBadge" class="lm-plan-badge lm-plan-free">FREE</span>
+      <div id="lmUserStatus" class="lm-ai-note">A carregar conta...</div>
+    </div>
+
+    <div class="lm-usage-wrap">
+      <div class="lm-usage-top">
+        <span id="lmUsageText">Uso hoje: 0/0</span>
+        <span id="lmUsageAlert" class="lm-usage-alert"></span>
+      </div>
+
+      <div class="lm-usage-bar">
+        <div id="lmUsageBarFill" class="lm-usage-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
   <button id="logoutBtn" class="lm-logout-btn" type="button">Sair</button>
 </div>
 
