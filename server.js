@@ -1,3 +1,5 @@
+import multer from "multer";
+import pdf from "pdf-parse";
 import express from "express";
 import dotenv from "dotenv";
 import OpenAI from "openai";
@@ -22,6 +24,19 @@ const supabaseAdmin = createClient(
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(path.join(__dirname, "public")));
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype !== "application/pdf") {
+      return cb(new Error("Apenas arquivos PDF são permitidos."));
+    }
+    cb(null, true);
+  }
+});
 
 const SYSTEM_PROMPT = `
 Você é o Assistente Acadêmico do LM TECH 93.
@@ -339,5 +354,95 @@ app.post("/api/admin/remove-premium", async (req, res) => {
   }
 });
 
+app.post("/api/pdf-summary", upload.single("pdf"), async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.replace("Bearer ", "").trim();
+
+    if (!token) {
+      return res.status(401).json({ error: "Precisas entrar primeiro." });
+    }
+
+    const user = await getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: "Sessão inválida." });
+    }
+
+    const profile = await getProfile(user.id);
+    if (!profile) {
+      return res.status(404).json({ error: "Perfil não encontrado." });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Nenhum PDF enviado." });
+    }
+
+    const isPremium =
+      profile.plan === "premium" &&
+      (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
+
+    // Se quiseres liberar PDF só para premium, deixa assim:
+    if (!isPremium) {
+      return res.status(403).json({
+        error: "Resumo de PDF disponível apenas para usuários premium."
+      });
+    }
+
+    const usageToday = await getTodayUsage(user.id);
+    const dailyLimit = isPremium ? 15 : profile.daily_limit || 3;
+
+    if (usageToday >= dailyLimit) {
+      return res.status(403).json({
+        error: "Limite diário atingido. Ativa ou renova o premium."
+      });
+    }
+
+    const pdfData = await pdf(req.file.buffer);
+    const extractedText = String(pdfData.text || "").trim();
+
+    if (!extractedText) {
+      return res.status(400).json({
+        error: "Não foi possível extrair texto deste PDF."
+      });
+    }
+
+    // Limitar texto para controlar custo
+    const trimmedText = extractedText.slice(0, 12000);
+
+    const response = await openai.responses.create({
+      model: "gpt-5.4-mini",
+      input: [
+        {
+          role: "system",
+          content: `
+Você é um assistente acadêmico do LM TECH 93.
+Resuma PDFs em português de forma clara, organizada e útil.
+Sempre entregue:
+1. Resumo geral
+2. Pontos principais
+3. Conclusão
+Use linguagem simples e profissional.
+          `
+        },
+        {
+          role: "user",
+          content: `Resuma este PDF:\n\n${trimmedText}`
+        }
+      ],
+      max_output_tokens: 700
+    });
+
+    await addUsage(user.id);
+
+    return res.json({
+      reply: response.output_text || "Não consegui resumir o PDF agora."
+    });
+  } catch (error) {
+    console.error("Erro no resumo de PDF:", error);
+    return res.status(500).json({
+      error: error.message || "Erro ao processar PDF."
+    });
+  }
+});
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Servidor em http://localhost:${port}`));

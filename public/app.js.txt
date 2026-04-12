@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
+const pdfInput = document.getElementById("pdfInput");
+const pdfSummaryBtn = document.getElementById("pdfSummaryBtn");
 const chatForm = document.getElementById("chatForm");
 const userInput = document.getElementById("userInput");
 const chatBox = document.getElementById("chatBox");
@@ -305,3 +307,64 @@ function startOfferCountdown() {
 startOfferCountdown();
 
 });
+
+async function handlePdfSummary() {
+  const token = getToken();
+
+  if (!token) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  if (!pdfInput || !pdfInput.files || !pdfInput.files[0]) {
+    addMessage("Seleciona um PDF primeiro.", "ai");
+    return;
+  }
+
+  const file = pdfInput.files[0];
+
+  const formData = new FormData();
+  formData.append("pdf", file);
+
+  pdfSummaryBtn.disabled = true;
+  pdfSummaryBtn.textContent = "A resumir PDF...";
+  setLoading();
+
+  try {
+    const response = await fetch("/api/pdf-summary", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    const data = await response.json();
+    removeLoading();
+
+    if (!response.ok) {
+      addMessage(data.error || "Erro ao resumir PDF.", "ai");
+      pdfSummaryBtn.disabled = false;
+      pdfSummaryBtn.textContent = "Resumir PDF";
+      return;
+    }
+
+    addMessage("Resumo do PDF:", "ai");
+    addMessage(data.reply || "Sem resumo disponível.", "ai");
+
+    pdfInput.value = "";
+    pdfSummaryBtn.disabled = false;
+    pdfSummaryBtn.textContent = "Resumir PDF";
+
+    await loadUserStatus();
+  } catch (error) {
+    removeLoading();
+    addMessage("Erro ao enviar PDF.", "ai");
+    pdfSummaryBtn.disabled = false;
+    pdfSummaryBtn.textContent = "Resumir PDF";
+  }
+}
+
+if (pdfSummaryBtn) {
+  pdfSummaryBtn.addEventListener("click", handlePdfSummary);
+}

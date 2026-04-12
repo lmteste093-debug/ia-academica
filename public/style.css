@@ -728,3 +728,44 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+.lm-pdf-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.lm-pdf-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #dceeff;
+}
+
+.lm-pdf-upload input[type="file"] {
+  width: 100%;
+  color: #dceeff;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.lm-pdf-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  background: linear-gradient(135deg, #00e5ff, #00b8ff);
+  color: #03131a;
+}
+
+.lm-pdf-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
