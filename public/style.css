@@ -317,3 +317,46 @@ body {
     align-items: flex-start;
   }
 }
+
+.lm-upgrade-box {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lm-upgrade-title {
+  color: #ffd7a8;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.lm-upgrade-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 700;
+  background: linear-gradient(135deg, #00e5ff, #00b8ff);
+  color: #03131a;
+}
+
+.lm-chat-form textarea:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.lm-chat-actions button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .lm-ai-page {
+    padding-bottom: 90px;
+  }
+}

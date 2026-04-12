@@ -1,3 +1,5 @@
+document.addEventListener("DOMContentLoaded", () => {
+
 const chatForm = document.getElementById("chatForm");
 const userInput = document.getElementById("userInput");
 const chatBox = document.getElementById("chatBox");
@@ -6,6 +8,7 @@ const statusBox = document.getElementById("lmUserStatus");
 const logoutBtn = document.getElementById("logoutBtn");
 
 function addMessage(text, type) {
+  if (!chatBox) return;
   const msg = document.createElement("div");
   msg.className = `lm-msg ${type === "user" ? "lm-msg-user" : "lm-msg-ai"}`;
   msg.textContent = text;
@@ -14,6 +17,7 @@ function addMessage(text, type) {
 }
 
 function setLoading() {
+  if (!chatBox) return;
   const loading = document.createElement("div");
   loading.className = "lm-msg lm-msg-ai";
   loading.id = "lm-loading";
@@ -27,6 +31,14 @@ function removeLoading() {
   if (loading) loading.remove();
 }
 
+function getToken() {
+  return localStorage.getItem("lm_access_token");
+}
+
+function clearSession() {
+  localStorage.removeItem("lm_access_token");
+}
+
 function lockChat(limitMessage = "Limite grátis atingido. Ativa o premium ou volta amanhã.") {
   if (userInput) {
     userInput.disabled = true;
@@ -38,7 +50,7 @@ function lockChat(limitMessage = "Limite grátis atingido. Ativa o premium ou vo
     submitButton.textContent = "Limite atingido";
   }
 
-  if (!document.getElementById("lm-upgrade-box")) {
+  if (chatForm && !document.getElementById("lm-upgrade-box")) {
     const box = document.createElement("div");
     box.id = "lm-upgrade-box";
     box.className = "lm-upgrade-box";
@@ -67,14 +79,6 @@ function unlockChat() {
   if (upgradeBox) upgradeBox.remove();
 }
 
-function getToken() {
-  return localStorage.getItem("lm_access_token");
-}
-
-function clearSession() {
-  localStorage.removeItem("lm_access_token");
-}
-
 async function loadUserStatus() {
   const token = getToken();
 
@@ -93,81 +97,9 @@ async function loadUserStatus() {
   try {
     const response = await fetch("/api/me", {
       headers: {
-        "Authorization": `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       }
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      clearSession();
-      statusBox.textContent = "Sessão inválida.";
-      setTimeout(() => {
-        window.location.href = "/login.html";
-      }, 800);
-      return;
-    }
-
-    const u = data.user;
-    const isPremium = u.plan === "premium";
-    const limit = isPremium ? 100 : u.daily_limit;
-    const used = u.usage_today || 0;
-    const percent = Math.min((used / limit) * 100, 100);
-
-    // TEXTO BASE
-    statusBox.textContent = isPremium
-      ? "Conta premium ativa."
-      : "Conta grátis ativa.";
-
-    // BADGE
-    if (planBadge) {
-      planBadge.textContent = isPremium ? "PREMIUM" : "FREE";
-      planBadge.classList.remove("lm-plan-free", "lm-plan-premium");
-      planBadge.classList.add(isPremium ? "lm-plan-premium" : "lm-plan-free");
-    }
-
-    // TEXTO DE USO
-    if (usageText) {
-      usageText.textContent = `Uso hoje: ${used}/${limit}`;
-    }
-
-    // ALERTA VISUAL
-    if (usageAlert) {
-      usageAlert.textContent = "";
-      usageAlert.classList.remove("warn", "danger");
-
-      if (percent >= 100) {
-        usageAlert.textContent = "Limite atingido";
-        usageAlert.classList.add("danger");
-      } else if (percent >= 80) {
-        usageAlert.textContent = "Perto do limite";
-        usageAlert.classList.add("warn");
-      }
-    }
-
-    // BARRA DE PROGRESSO
-    if (usageBarFill) {
-      usageBarFill.style.width = `${percent}%`;
-      usageBarFill.classList.remove("warn", "danger");
-
-      if (percent >= 100) {
-        usageBarFill.classList.add("danger");
-      } else if (percent >= 80) {
-        usageBarFill.classList.add("warn");
-      }
-    }
-
-    // BLOQUEIO
-    if (used >= limit) {
-      lockChat("Limite diário atingido. Ativa o premium ou volta amanhã.");
-    } else {
-      unlockChat();
-    }
-
-  } catch {
-    statusBox.textContent = "Erro ao carregar conta.";
-  }
-}
 
     const data = await response.json();
 
@@ -181,17 +113,57 @@ async function loadUserStatus() {
     }
 
     const u = data.user;
-    const limit = u.plan === "premium" ? 100 : u.daily_limit;
+    const isPremium = u.plan === "premium";
+    const limit = isPremium ? 100 : u.daily_limit;
+    const used = u.usage_today || 0;
+    const percent = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
 
-    statusBox.textContent = `Plano: ${u.plan.toUpperCase()} | Uso hoje: ${u.usage_today}/${limit}`;
+    statusBox.textContent = isPremium
+      ? "Conta premium ativa."
+      : "Conta grátis ativa.";
 
-    if (u.usage_today >= limit) {
+    if (planBadge) {
+      planBadge.textContent = isPremium ? "PREMIUM" : "FREE";
+      planBadge.classList.remove("lm-plan-free", "lm-plan-premium");
+      planBadge.classList.add(isPremium ? "lm-plan-premium" : "lm-plan-free");
+    }
+
+    if (usageText) {
+      usageText.textContent = `Uso hoje: ${used}/${limit}`;
+    }
+
+    if (usageAlert) {
+      usageAlert.textContent = "";
+      usageAlert.classList.remove("warn", "danger");
+
+      if (percent >= 100) {
+        usageAlert.textContent = "Limite atingido";
+        usageAlert.classList.add("danger");
+      } else if (percent >= 80) {
+        usageAlert.textContent = "Perto do limite";
+        usageAlert.classList.add("warn");
+      }
+    }
+
+    if (usageBarFill) {
+      usageBarFill.style.width = `${percent}%`;
+      usageBarFill.classList.remove("warn", "danger");
+
+      if (percent >= 100) {
+        usageBarFill.classList.add("danger");
+      } else if (percent >= 80) {
+        usageBarFill.classList.add("warn");
+      }
+    }
+
+    if (used >= limit) {
       lockChat("Limite diário atingido. Ativa o premium ou volta amanhã.");
     } else {
       unlockChat();
     }
-  } catch {
-    statusBox.textContent = "Não foi possível carregar tua conta.";
+  } catch (error) {
+    console.error("Erro ao carregar status:", error);
+    statusBox.textContent = "Erro ao carregar conta.";
   }
 }
 
@@ -212,8 +184,8 @@ if (chatForm) {
       return;
     }
 
-    const message = userInput.value.trim();
-    if (!message || userInput.disabled) return;
+    const message = userInput?.value.trim();
+    if (!message || userInput?.disabled) return;
 
     addMessage(message, "user");
     userInput.value = "";
@@ -224,7 +196,7 @@ if (chatForm) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ message })
       });
@@ -255,6 +227,7 @@ if (chatForm) {
       addMessage(data.reply || "Sem resposta no momento.", "ai");
       await loadUserStatus();
     } catch (error) {
+      console.error("Erro no envio:", error);
       removeLoading();
       addMessage("Erro de ligação com o servidor.", "ai");
     }
@@ -262,3 +235,5 @@ if (chatForm) {
 }
 
 loadUserStatus();
+
+});
