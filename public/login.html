@@ -84,13 +84,14 @@
           return;
         }
 
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name, phone }
-          }
-        });
+       const { data, error } = await supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    data: { full_name, phone },
+    emailRedirectTo: 'https://ia-academica-1.onrender.com/login.html'
+  }
+});
 
         if (error) {
           msg.textContent = 'Erro ao criar conta: ' + error.message;
