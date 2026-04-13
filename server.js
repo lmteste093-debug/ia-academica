@@ -2,7 +2,7 @@ import multer from "multer";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
-const pdf = require("pdf-parse");
+const { PDFParse } = require("pdf-parse");
 import express from "express";
 import dotenv from "dotenv";
 import OpenAI from "openai";
@@ -400,8 +400,11 @@ app.post("/api/pdf-summary", upload.single("pdf"), async (req, res) => {
       });
     }
 
-    const pdfData = await pdf(req.file.buffer);
-    const extractedText = String(pdfData.text || "").trim();
+    const parser = new PDFParse({ data: req.file.buffer });
+const pdfData = await parser.getText();
+await parser.destroy();
+
+const extractedText = String(pdfData.text || "").trim();
 
     if (!extractedText) {
       return res.status(400).json({
