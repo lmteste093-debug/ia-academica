@@ -195,6 +195,8 @@ app.post("/api/chat", async (req, res) => {
     const token = authHeader.replace("Bearer ", "").trim();
     const { message } = req.body;
 
+
+
     if (!token) {
       return res.status(401).json({ error: "Precisas entrar primeiro." });
     }
@@ -214,6 +216,15 @@ app.post("/api/chat", async (req, res) => {
     if (!cleanMessage) {
       return res.status(400).json({ error: "Escreve uma pergunta primeiro." });
     }
+
+await supabaseAdmin
+  .from("chat_messages")
+  .insert({
+    user_id: user.id,
+    role: "user",
+    message: cleanMessage,
+    tool: "cyber_ai"
+  });
 
     if (cleanMessage.length > 500) {
       return res.status(400).json({
@@ -267,6 +278,15 @@ if (!isPremium && blockedFreeModules) {
   });
 }
 
+await supabaseAdmin
+  .from("chat_messages")
+  .insert({
+    user_id: user.id,
+    role: "user",
+    message: cleanMessage,
+    tool: "cyber_ai"
+  });
+
     const response = await openai.responses.create({
       model: "gpt-5.4-mini",
       input: [
@@ -278,10 +298,21 @@ if (!isPremium && blockedFreeModules) {
 
     await addUsage(user.id);
 
+const respostaIA =
+  response.output_text ||
+  "🛡️ Cyber AI sem resposta no momento.";
+
+await supabaseAdmin
+  .from("chat_messages")
+  .insert({
+    user_id: user.id,
+    role: "assistant",
+    message: respostaIA,
+    tool: "cyber_ai"
+  });
+
     return res.json({
-      reply:
-        response.output_text ||
-        "🛡️ Cyber AI sem resposta no momento.",
+     reply: respostaIA,
       plan: isPremium ? "premium" : "free",
       usage_today: usageToday + 1,
       daily_limit: dailyLimit
@@ -570,49 +601,7 @@ Não ensine ataques ilegais, invasão, roubo, malware ou clonagem.
   }
 });
 
-app.post("/api/save-lead", async (req, res) => {
-  try {
-    const { phone, nome, tipo_negocio, objetivo } = req.body;
 
-    const { error } = await supabaseAdmin
-      .from("bot_clients")
-      .upsert(
-        {
-          phone,
-          name: nome,
-          tipo_negocio,
-          objetivo,
-          status: "lead",
-          last_message: objetivo,
-          source: "manychat",
-          updated_at: new Date().toISOString()
-        },
-        { onConflict: "phone" }
-      );
-
-    if (error) throw error;
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Erro ao salvar lead:", err);
-    res.status(500).json({ error: "Erro ao salvar lead" });
-  }
-});
-
-app.post("/api/ia-vendedora", async (req, res) => {
-  try {
-    res.json({
-      success: true,
-      reply: "🛡️ Cyber AI funcionando 🔥"
-    });
-  } catch (err) {
-    console.error("Erro IA:", err);
-    res.json({
-      success: false,
-      reply: "Erro na Cyber AI."
-    });
-  }
-});
 
 app.post("/api/generate-certificate", async (req, res) => {
   try {
@@ -730,20 +719,20 @@ app.post("/api/text-tools", async (req, res) => {
       : `
 🔒 Limite grátis atingido.<br><br>
 
-<a href="https://wa.me/258861532479?text=Olá%20LM%20TECH%2093,%20quero%20ativar%20o%20Premium%20das%20ferramentas%20IA"
-target="_blank"
+<a href="/p/premium.html"
 style="
-display:inline-block;
-padding:12px 18px;
-background:linear-gradient(135deg,#00c853,#00e676);
-color:#ffffff;
-font-weight:bold;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+padding:14px 18px;
+background:linear-gradient(135deg,#00e5ff,#0077ff);
+color:#fff;
+font-weight:900;
+border-radius:14px;
 text-decoration:none;
-border-radius:12px;
-font-size:15px;
-margin-top:10px;
+box-shadow:0 0 20px rgba(0,229,255,.35);
 ">
-💬 Ativar Premium no WhatsApp
+💎 Desbloquear Modelo Premium
 </a>
 `
   });
@@ -800,6 +789,32 @@ Dê nível de originalidade, risco baixo/médio/alto e sugestões.
     return res.status(500).json({
       erro: "Erro interno ao processar texto."
     });
+  }
+});
+
+app.get("/api/chat-history", async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.replace("Bearer ", "").trim();
+
+    if (!token) return res.status(401).json({ error: "Sem sessão." });
+
+    const user = await getUserFromToken(token);
+    if (!user) return res.status(401).json({ error: "Sessão inválida." });
+
+    const { data, error } = await supabaseAdmin
+      .from("chat_messages")
+      .select("role, message, created_at")
+      .eq("user_id", user.id)
+      .eq("tool", "cyber_ai")
+      .order("created_at", { ascending: true })
+      .limit(50);
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ messages: data || [] });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao buscar histórico." });
   }
 });
 

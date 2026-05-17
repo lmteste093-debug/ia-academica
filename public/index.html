@@ -242,6 +242,50 @@
 
 </div>
 
+<script>
+async function carregarHistoricoCyberAI(){
+  const token = localStorage.getItem("lm_access_token");
+  const chatBox = document.getElementById("chatBox");
+
+  if(!chatBox || !token) return;
+
+  try{
+    const res = await fetch("/api/chat-history", {
+      headers:{
+        "Authorization":"Bearer " + token
+      }
+    });
+
+    const data = await res.json();
+
+    if(!res.ok || !data.messages) return;
+
+    if(data.messages.length > 0){
+      chatBox.innerHTML = "";
+    }
+
+    data.messages.forEach(function(msg){
+      const div = document.createElement("div");
+
+      div.className = msg.role === "user"
+        ? "lm-msg lm-msg-user"
+        : "lm-msg lm-msg-ai";
+
+      div.innerHTML = String(msg.message || "").replace(/\n/g, "<br>");
+
+      chatBox.appendChild(div);
+    });
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+  }catch(e){
+    console.log("Erro ao carregar histórico:", e.message);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", carregarHistoricoCyberAI);
+</script>
+
 <script src="/app.js" defer></script>
 </body>
 </html>
